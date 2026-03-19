@@ -1,0 +1,50 @@
+﻿@model Gestion_de_inventario_PI.Models.Product
+@{
+    ViewBag.Title = "Eliminar Producto";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="details" style="grid-template-columns: 1fr; padding-top: 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1 style="font-size: 1.8rem; color: var(--danger);">Eliminar Producto</h1>
+            <p style="color: var(--text-secondary);">Esta acción no se puede deshacer.</p>
+        </div>
+        <a href="@Url.Action("Index","Products")" class="btn-secondary" style="text-decoration: none;">
+            <ion-icon name="arrow-back-outline" style="transform: translateY(2px);"></ion-icon> Cancelar y Volver
+        </a>
+    </div>
+
+    <div class="form-card" style="display: block; border-left: 4px solid var(--danger);">
+        <div class="form-header">
+            <h2>¿Estás completamente seguro de eliminar este artículo?</h2>
+        </div>
+
+        <div class="form-layout" style="margin-top: 20px;">
+            <div style="display: flex; gap: 20px; align-items: center; background: var(--bg-surface); padding: 20px; border-radius: 8px; border: 1px solid var(--border);">
+
+                <div style="width: 100px; height: 100px; border-radius: 8px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border);">
+                    <img src="@Url.Content(Model.image ?? "~/assets/imgs/placeholder.png")" alt="Producto" style="width: 100%; height: 100%; object-fit: cover;" />
+                </div>
+
+                <div style="flex: 1;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 5px; font-size: 1.4rem;">@Model.name</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 5px;"><strong>SKU:</strong> @Model.code | <strong>Categoría:</strong> @(Model.Category != null ? Model.Category.Name : "")</p>
+                    <p style="color: var(--text-secondary);"><strong>Stock Actual:</strong> <span style="color: var(--danger); font-weight: bold;">@Model.stock unidades</span></p>
+                </div>
+            </div>
+        </div>
+
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(m => m.id_product)
+            <div class="form-actions" style="margin-top: 30px; justify-content: flex-start;">
+                <button type="submit" class="btn" style="background: var(--danger); color: white;">
+                    <ion-icon name="trash-outline" style="margin-right:5px; transform: translateY(2px);"></ion-icon> Sí, Eliminar Definitivamente
+                </button>
+            </div>
+        }
+    </div>
+</section>
+

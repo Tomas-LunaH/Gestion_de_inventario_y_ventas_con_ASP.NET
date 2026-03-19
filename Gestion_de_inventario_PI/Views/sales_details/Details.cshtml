@@ -1,0 +1,59 @@
+﻿@model Gestion_de_inventario_PI.Models.sales_details
+
+@{
+    ViewBag.Title = "Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Details</h2>
+
+<div>
+    <h4>sales_details</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.Product.code)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Product.code)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.Sale.payment)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.Sale.payment)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.amount)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.amount)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.unit_price)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.unit_price)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.subtotal)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.subtotal)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.id_detail }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

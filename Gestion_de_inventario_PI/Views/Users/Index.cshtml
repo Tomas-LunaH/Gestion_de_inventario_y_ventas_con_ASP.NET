@@ -1,0 +1,171 @@
+@model IEnumerable<Gestion_de_inventario_PI.Models.UserWithRoleVM>
+@{
+    ViewBag.Title = "Administracion de Usuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="details" style="padding-top: 0; display: flex; justify-content: center; margin-top: 20px;">
+    <div class="recentOrders" style="min-height: auto; max-width: 1000px; width: 100%; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+        <div class="cardHeader">
+            <h2>Administra tus Usuarios</h2>
+            <button class="btn" onclick="abrirModalUsuario()">+ Agregar Usuario</button>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div style="background: rgba(220, 53, 69, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <strong>Error:</strong> @TempData["Error"]
+            </div>
+        }
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <input type="text" id="searchInput" onkeyup="filtrarUsuarios()" placeholder="Buscar por email..."
+                   style="flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border);
+                    border-radius: 4px; background: var(--bg-card); color: var(--text-primary); font-size: 14px;">
+        </div>
+
+        <div class="table-container">
+            <table id="usersTable">
+                <thead>
+                    <tr>
+                        <th>ID Secreto</th>
+                        <th>Email / Usuario</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay usuarios registrados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var user in Model)
+                        {
+                            <tr class="fila-usuario">
+                                <td style="color: var(--text-secondary); font-size: 0.85rem;">@user.Id.Substring(0, 8)...</td>
+                                <td class="col-email" style="font-weight: 500;">@user.Email</td>
+                                <td>
+                                    <span style="background: var(--bg-surface); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+                                        <ion-icon name="@(user.RoleName == "Administrador" ? "key-outline" : "person-outline")" style="transform: translateY(2px); margin-right: 2px;"></ion-icon>
+                                        @user.RoleName
+                                    </span>
+                                </td>
+                                <td><span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">Activo</span></td>
+                                <td>
+                                    @if (user.Email != "admin@geosys.com")
+                                    {
+                                        <button onclick="confirmarEliminar('@user.Id', '@user.Email')" class="btn btn-outline" style="color: var(--danger); border-color: var(--danger); padding: 4px 8px;">
+                                            <ion-icon name="trash-outline"></ion-icon> Revocar Acceso
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--primary); font-size: 0.8rem;"><ion-icon name="shield-checkmark-outline"></ion-icon> Intocable</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </section>
+
+
+
+    <div id="userModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: var(--bg-surface); width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 id="modalTitle" style="color: var(--text-primary); margin: 0;">Agregar Nuevo Empleado</h2>
+                <button onclick="cerrarModalUsuario()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            @using (Html.BeginForm("Create", "Users", FormMethod.Post, new { id = "userForm" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Email (Se usará como su usuario) *</label>
+                    <input type="email" name="Correo" required style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-main); color: var(--text-primary);">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Rol en el sistema *</label>
+                    <select name="Rol" required style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-main); color: var(--text-primary);">
+                        <option value="">Seleccionar rol</option>
+                        <option value="Administrador">Administrador (Control Total)</option>
+                        <option value="Empleado">Empleado (Solo Punto de Venta)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-secondary);">Contraseña temporal *</label>
+                    <input type="password" name="Password" required placeholder="¨Mínimo 6 caracteres, 1 mayúscula y 1 símbolo" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-main); color: var(--text-primary);">
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="cerrarModalUsuario()" class="btn" style="background: transparent; border: 1px solid var(--border); color: var(--text-primary);">Cancelar</button>
+                    <button type="submit" class="btn" style="background: var(--primary); color: white;">Guardar Usuario</button>
+                </div>
+            }
+        </div>
+    </div>
+
+    @section Scripts {
+        <script>
+        // --- 1. FILTRO DE BÚSQUEDA ---
+        function filtrarUsuarios() {
+            const searchVal = document.getElementById("searchInput").value.toUpperCase();
+            const filas = document.getElementsByClassName("fila-usuario");
+
+            for (let i = 0; i < filas.length; i++) {
+                const txtEmail = filas[i].getElementsByClassName("col-email")[0].textContent.toUpperCase();
+                if (txtEmail.indexOf(searchVal) > -1) {
+                    filas[i].style.display = "";
+                } else {
+                    filas[i].style.display = "none";
+                }
+            }
+        }
+
+        // --- 2. CONTROL DEL MODAL DE CREACIÓN ---
+        function abrirModalUsuario() {
+            document.getElementById('userModal').style.display = 'flex';
+        }
+
+        function cerrarModalUsuario() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        // --- 3. ELIMINACIÓN CON AJAX (SweetAlert nativo) ---
+        function confirmarEliminar(idUsuario, correo) {
+            if (confirm("\u00bfPeligro! Estas completamente seguro de revocarle el acceso al usuario " + correo + " No  volvera a iniciar sesión en GeoSYS.")) {
+
+                fetch('@Url.Action("Eliminar", "Users")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: idUsuario })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        alert("Acceso revocado correctamente.");
+                        location.reload();
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    alert("Error de conexión con el servidor de seguridad.");
+                });
+            }
+        }
+        </script>
+    }

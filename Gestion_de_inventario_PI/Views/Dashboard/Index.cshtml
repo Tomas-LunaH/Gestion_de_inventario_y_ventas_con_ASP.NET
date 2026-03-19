@@ -1,0 +1,195 @@
+@model IEnumerable<Gestion_de_inventario_PI.Models.Category>
+@using Gestion_de_inventario_PI.Models
+@using System.Collections.Generic
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "Panel de Control";
+}
+
+<section class="cardBox">
+    <div class="card success">
+        <div>
+            <div class="numbers" data-value="@ViewBag.VentasHoy">@ViewBag.VentasHoyStr</div>
+            <div class="cardName">Ventas Hoy</div>
+        </div>
+        <div class="iconBx">
+            <ion-icon name="cash-outline"></ion-icon>
+        </div>
+    </div>
+    <div class="card success">
+        <div>
+            <div class="numbers" data-value="@ViewBag.UtilidadHoy">@ViewBag.UtilidadHoyStr</div>
+            <div class="cardName">Utilidad Bruta Hoy</div>
+        </div>
+        <div class="iconBx">
+            <ion-icon name="trending-up-outline"></ion-icon>
+        </div>
+    </div>
+    <div class="card danger">
+        <div>
+            <div class="numbers" data-value="@ViewBag.StockCritico" data-from="15">@ViewBag.StockCritico</div>
+            <div class="cardName">Stock Bajo</div>
+        </div>
+        <div class="iconBx">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+        </div>
+    </div>
+    <div class="card info">
+        <div>
+            <div class="numbers" data-value="@ViewBag.ValorInventario">@ViewBag.ValorInventarioStr</div>
+            <div class="cardName">Valor Inventario</div>
+        </div>
+        <div class="iconBx">
+            <ion-icon name="layers-outline"></ion-icon>
+        </div>
+    </div>
+</section>
+
+<section class="details" style="padding-top: 0;">
+    <div class="recentOrders" style="min-height: auto;">
+        <div class="cardHeader">
+            <h2>Productos con mayor venta - Esta Semana</h2>
+            <a href="@Url.Action("Index", "Products")" class="btn">Ver inventario completo</a>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Unidades Vendidas</th>
+                        <th>Monto Total</th>
+                        <th>Stock Actual</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var topList = ViewBag.TopProductos as List<ProductoVendidoVM>;
+                    }
+                    @if (topList != null && topList.Count > 0)
+                    {
+                        foreach (var p in topList)
+                        {
+                            string estadoClase = p.Stock <= 0 ? "critical" : (p.Stock < 15 ? "low" : "ok");
+                            string estadoTexto = p.Stock <= 0 ? "Sin stock" : (p.Stock < 15 ? "Bajo" : "OK");
+                            string stockClase  = p.Stock <= 0 ? "stock-critical" : (p.Stock < 15 ? "stock-low" : "stock-ok");
+                            <tr>
+                                <td data-label="Producto">@p.Nombre</td>
+                                <td data-label="Categoría">@p.Categoria</td>
+                                <td data-label="Unidades">@p.Unidades.ToString("N0")</td>
+                                <td data-label="Monto">$@p.Monto.ToString("N2")</td>
+                                <td data-label="Stock" class="@stockClase">@p.Stock</td>
+                                <td><span class="status @estadoClase">@estadoTexto</span></td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:30px; color:var(--text-secondary);">
+                                No hay ventas registradas esta semana.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="recentCustomers" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); padding: 20px; box-shadow: 0 6px 18px rgba(0,0,0,0.08);">
+            <div style="display:flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div>
+                    <h2 style="margin:0; font-size:1.2rem; color: var(--text-primary);">Categorías</h2>
+                    <p style="margin:4px 0 0; color: var(--text-secondary);">Crea y elimina categorias.</p>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap: wrap; align-items:center;">
+                    <input id="catName" type="text" placeholder="Nombre" class="form-input" style="min-width:220px;">
+                    <button id="btnAddCat" class="btn" type="button" style="display:flex; align-items:center; gap:6px;">
+                        <ion-icon name="add-outline"></ion-icon> Agregar
+                    </button>
+                </div>
+            </div>
+
+            <div style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; max-height: 320px; overflow-y: auto;">
+                <table style="width: 100%; border-collapse: collapse;" id="tablaCategorias">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding:8px; color:var(--text-secondary);">Nombre</th>
+                            <th style="text-align:right; padding:8px; color:var(--text-secondary);">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cat in Model)
+                        {
+                            <tr id="row-cat-@cat.Id_category" style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 10px 0; color: var(--text-primary); font-weight:600;">@cat.Name</td>
+                                <td style="padding: 10px 0; text-align: right;">
+                                    <button onclick="eliminarCategoria(@cat.Id_category)" style="background: none; border: 1px solid var(--border); color: var(--danger); cursor: pointer; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                                        <ion-icon name="trash-outline"></ion-icon> Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div id="catEmpty" style="padding:12px; color:var(--text-secondary); display:@(Model.Any() ? "none" : "block");">Sin categorías registradas.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    (function () {
+        const nameInput = document.getElementById('catName');
+        const btnAdd = document.getElementById('btnAddCat');
+        const tbody = document.querySelector('#tablaCategorias tbody');
+        const empty = document.getElementById('catEmpty');
+
+        btnAdd.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (!name) { alert('El nombre es requerido'); return; }
+            fetch('@Url.Action("CrearCategoria", "Dashboard")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `nombre=${encodeURIComponent(name)}`
+            }).then(r => r.json()).then(res => {
+                if (res.success) {
+                    nameInput.value = '';
+                    appendRow({ Id_category: res.id, Name: res.nombre });
+                } else { alert(res.message || 'No se pudo crear'); }
+            });
+        });
+
+        function appendRow(cat) {
+            empty.style.display = 'none';
+            const tr = document.createElement('tr');
+            tr.id = `row-cat-${cat.Id_category}`;
+            tr.style.borderBottom = '1px solid var(--border)';
+            tr.innerHTML = `
+                <td style="padding: 10px 0; color: var(--text-primary); font-weight:600;">${cat.Name}</td>
+                <td style="padding: 10px 0; text-align: right;">
+                    <button onclick="eliminarCategoria(${cat.Id_category})" style="background: none; border: 1px solid var(--border); color: var(--danger); cursor: pointer; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                        <ion-icon name="trash-outline"></ion-icon> Eliminar
+                    </button>
+                </td>`;
+            tbody.appendChild(tr);
+        }
+
+        window.eliminarCategoria = function (id) {
+            if (!confirm('¿Seguro que deseas eliminar esta categoria?')) return;
+            fetch('@Url.Action("EliminarCategoria", "Dashboard")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}`
+            }).then(r => r.json()).then(res => {
+                if (res.success) {
+                    const row = document.getElementById('row-cat-' + id);
+                    if (row) row.remove();
+                    if (tbody.children.length === 0) empty.style.display = 'block';
+                } else { alert(res.message || 'No se pudo eliminar'); }
+            });
+        }
+    })();
+</script>

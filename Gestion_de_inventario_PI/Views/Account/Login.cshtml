@@ -1,0 +1,71 @@
+@using Gestion_de_inventario_PI.Models
+@model LoginViewModel
+@{
+    ViewBag.Title = "Iniciar sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | LOS PEREZ</title>
+
+    <link rel="stylesheet" href="~/Content/style.css">
+    <script type="text/javascript">
+        // Atrapa al usuario en la página de Login. Si intenta ir "Atrás", lo vuelve a empujar al Login.
+        function preventBack() { window.history.forward(); }
+        setTimeout("preventBack()", 0);
+        window.onunload = function () { null };
+    </script>
+</head>
+
+<body style="background: var(--bg-main); color: var(--text-primary); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; font-family: 'Ubuntu', sans-serif;">
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <ion-icon name="build" style="font-size: 3.5rem; color: var(--primary); margin-bottom: 10px;"></ion-icon>
+                <h2>LOS PEREZ</h2>
+                <p>Ingresa tus datos para acceder al sistema de inventario.</p>
+            </div>
+
+            @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { id = "loginForm", @class = "login-form", role = "form" }))
+            {
+                @Html.AntiForgeryToken()
+
+                @Html.ValidationSummary(true, "", new { style = "color: #dc3545; font-size: 0.85rem; margin-bottom: 15px; text-align: center;" })
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500;">Correo electrónico</label>
+                    <div class="input-container" style="position: relative;">
+                        <ion-icon name="mail-outline" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></ion-icon>
+
+                        <input type="email" name="Email" required placeholder="admin@losperez.com" class="form-input" style="padding-left: 45px; width: 100%; box-sizing: border-box; height: 45px;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500;">Contraseña</label>
+                    <div class="input-container" style="position: relative;">
+                        <ion-icon name="lock-closed-outline" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1.2rem;"></ion-icon>
+
+                        <input type="password" name="Password" required placeholder="••••••••" class="form-input" style="padding-left: 45px; width: 100%; box-sizing: border-box; height: 45px;">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px; font-size: 1.1rem; border: none; cursor: pointer; border-radius: 8px; font-weight: 500; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    Iniciar Sesión <ion-icon name="log-in-outline"></ion-icon>
+                </button>
+            }
+
+           
+        </div>
+    </div>
+
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title | LOS PEREZ</title>
+
+    <link rel="stylesheet" href="~/Content/style.css">
+    <script type="text/javascript">
+        // Evita que la página se cargue desde la caché del navegador (BFCache) al darle "Atrás"
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <nav class="navigation">
+            @{
+                var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+            }
+            <ul>
+                <li>
+                    <a href="@Url.Action("Index", "Dashboard")">
+                        <span class="icon"><ion-icon name="build-outline" style="color:var(--primary);"></ion-icon></span>
+                        <span class="title" style="font-weight: 700; font-size: 1.2rem;">LOS PEREZ<br><small style="font-size: 0.7rem; font-weight: 300; opacity: 0.7;">Sistema de Inventario</small></span>
+                    </a>
+                </li>
+                <li class="@(currentController == "Dashboard" ? "hovered" : "")">
+                    <a href="@Url.Action("Index", "Dashboard")">
+                        <span class="icon"><ion-icon name="grid-outline"></ion-icon></span>
+                        <span class="title">Dashboard</span>
+                    </a>
+                </li>
+                <li class="@(currentController == "Products" ? "hovered" : "")">
+                    <a href="@Url.Action("Index", "Products")">
+                        <span class="icon"><ion-icon name="cube-outline"></ion-icon></span>
+                        <span class="title">Inventario</span>
+                    </a>
+                </li>
+                <li class="@(currentController == "Sales" ? "hovered" : "")">
+                    <a href="@Url.Action("Index", "Sales")">
+                        <span class="icon"><ion-icon name="cart-outline"></ion-icon></span>
+                        <span class="title">Punto de Venta</span>
+                    </a>
+                </li>
+                <li class="@(currentController == "Details" ? "hovered" : "")">
+                    <a href="@Url.Action("Index", "Details")">
+                        <span class="icon"><ion-icon name="reader-outline"></ion-icon></span>
+                        <span class="title">Adm. Ventas</span>
+                    </a>
+                </li>
+
+                <li class="@(currentController == "Movements" ? "hovered" : "")">
+                    <a href="@Url.Action("Index", "Movements")">
+                        <span class="icon"><ion-icon name="swap-vertical-outline"></ion-icon></span>
+                        <span class="title">Movimientos</span>
+                    </a>
+                </li>
+                @if (User.IsInRole("Administrador"))
+                {
+                    <li class="@(currentController == "Users" ? "hovered" : "")">
+                        <a href="@Url.Action("Index", "Users")">
+                            <span class="icon"><ion-icon name="people-outline"></ion-icon></span>
+                            <span class="title">Usuarios</span>
+                        </a>
+                    </li>
+                }
+                <li>
+                    <a href="@Url.Action("LogOff", "Account")">
+                        <span class="icon"><ion-icon name="log-out-outline"></ion-icon></span>
+                        <span class="title">Cerrar Sesión</span>
+                    </a>
+                </li>
+            </ul>
+            <div id="nav-hover-indicator"></div>
+        </nav>
+
+        <main class="main">
+            <header class="topbar" style="justify-content: flex-end; background: transparent; box-shadow: none; margin-bottom: 20px;">
+                <div class="topbar-actions">
+
+                    <div class="user" style="cursor:pointer; display: flex; align-items: center; gap: 10px;">
+                        <div class="user-info" style="text-align: right;">
+                            <span style="font-weight: 600; font-size: 1rem; color: var(--text-primary); display: block;">@User.Identity.Name</span>
+                            <small style="color: var(--primary); font-weight: 700; font-size: 0.8rem; background: rgba(99, 91, 255, 0.1); padding: 2px 8px; border-radius: 12px; display: inline-block;">
+                                @if (User.IsInRole("Administrador"))
+                                {
+                                    <text>Administrador</text>
+                                }
+                                else if (User.IsInRole("Empleado"))
+                                {
+                                    <text>Empleado</text>
+                                }
+                                else
+                                {
+                                    <text>Sin Rol</text>
+                                }
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            @RenderBody()
+
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/Scripts/main.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
+    @RenderSection("scripts", required: false)
+
+    <script>
+        (function () {
+            // Indicador flotante naranja que sigue el cursor en el menú
+            const indicator = document.getElementById('nav-hover-indicator');
+            const nav = document.querySelector('.navigation');
+
+            document.querySelectorAll('.navigation ul li:not(:first-child)').forEach(item => {
+                item.addEventListener('mouseenter', () => {
+                    const navRect  = nav.getBoundingClientRect();
+                    const itemRect = item.getBoundingClientRect();
+                    indicator.style.top    = (itemRect.top - navRect.top + nav.scrollTop) + 'px';
+                    indicator.style.height = itemRect.height + 'px';
+                    indicator.style.opacity = '1';
+                });
+            });
+
+            nav.addEventListener('mouseleave', () => {
+                indicator.style.opacity = '0';
+            });
+        })();
+    </script>
+</body>
+</html>

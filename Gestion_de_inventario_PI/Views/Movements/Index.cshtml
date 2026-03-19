@@ -1,0 +1,201 @@
+@using System.Collections.Generic
+@model IEnumerable<Gestion_de_inventario_PI.Models.movement>
+@{
+    ViewBag.Title = "Auditoría de Movimientos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var userLookup = ViewBag.UserEmails as IDictionary<string, string>;
+}
+
+
+    <section style="margin-bottom: 30px; margin-top: 20px; padding-left: 30px;">
+        <div class="cardHeader" style="align-items: center; justify-content: flex-start; gap: 20px; width: 100%; padding:0;">
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <h2 style="font-size: 1.8rem; margin: 0;">Gestiona tus Movimientos de Inventario</h2>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Registro completo de todas las transacciones que afecten el inventario</p>
+            </div>
+            <a href="@Url.Action("Create", "Movements")" class="btn" style="display: flex; align-items: center; gap: 8px;">
+                <ion-icon name="add-outline"></ion-icon> Agregar Movimiento
+            </a>
+        </div>
+    </section>
+
+
+
+    <section class="details" style="margin-top:20px; padding-left: 30px;">
+        <div class="recentOrders" style="padding: 30px; box-sizing: border-box;">
+            <div class="cardHeader">
+                <h2>Historial de Movimientos</h2>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="inputBusqueda" onkeyup="filtrarMovimientos()" placeholder="Buscar producto o motivo..." style="padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); width: 200px;">
+                    <select id="filtroTipo" onchange="filtrarMovimientos()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary);">
+                        <option value="">Todos los tipos</option>
+                        <option value="Venta">Venta</option>
+                        <option value="Entrada">Entrada</option>
+                        <option value="Ajuste">Ajuste</option>
+                        <option value="Merma">Merma</option>
+                        <option value="Devolucion">Devolucion</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="tablaMovimientos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Motivo/Ref</th>
+                            <th>Usuario</th>
+                            <th>Fecha/Hora</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 20px; color: var(--text-secondary);">No hay movimientos registrados.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var item in Model)
+                            {
+                    <tr class="fila-movimiento">
+                        <td>#@item.id_movement</td>
+                        <td class="col-tipo">
+                            @if (item.type_movement == "Entrada" || item.type_movement == "Devolucion")
+                            {
+                                <span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">@item.type_movement</span>
+                            }
+                            else if (item.type_movement == "Merma" || item.type_movement == "Ajuste")
+                            {
+                                <span style="background: rgba(220, 53, 69, 0.2); color: #dc3545; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">@item.type_movement</span>
+                            }
+                            else if (item.type_movement == "Venta")
+                            {
+                                <span style="background: rgba(99, 91, 255, 0.2); color: #635bff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">@item.type_movement</span>
+                            }
+                            else
+                            {
+                                <span style="background: rgba(108, 117, 125, 0.2); color: #6c757d; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">@item.type_movement</span>
+                            }
+                        </td>
+                        <td class="col-producto">@(item.Product != null ? item.Product.name : "Producto Eliminado")</td>
+                        <td style="font-weight: bold;">
+                            @(item.type_movement == "Merma" || item.type_movement == "Venta" || item.type_movement == "Ajuste" ? "-" : "+")@item.amount
+                        </td>
+                        <td class="col-motivo">@item.motive</td>
+                        <td>
+                            @{
+                                var email = (!string.IsNullOrEmpty(item.userid) && userLookup != null && userLookup.ContainsKey(item.userid))
+                                    ? userLookup[item.userid]
+                                    : "Sistema/Admin";
+                            }
+                            @email
+                        </td>
+                        <td>@item.datemovement.ToString("dd/MMM/yyyy HH:mm")</td>
+                        <td>
+                            @if (item.type_movement != "Venta")
+                            {
+                                // SOLO EL ADMIN PUEDE VER EL BOTÓN DE ANULAR
+                                if (User.IsInRole("Administrador"))
+                                {
+                                    <button onclick="eliminarMovimiento(@item.id_movement)" class="btn btn-outline" style="color: var(--danger); border-color: var(--danger); padding: 4px 8px;">
+                                        <ion-icon name="trash-outline"></ion-icon> Anular
+                                    </button>
+
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-secondary); font-size: 0.8rem;">Solo lectura</span>
+                                }
+                            }
+                            else
+                            {
+                                <span style="color: var(--text-secondary); font-size: 0.8rem;">Auto-generado</span>
+                            }
+                        </td>
+
+                    </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 30px; padding-top: 30px; border-top: 1px solid var(--border);">
+                <div style="padding: 15px; background: var(--bg-surface); border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Total de Movimientos</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary);">@Model.Count()</div>
+                </div>
+                <div style="padding: 15px; background: var(--bg-surface); border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Entradas / Devoluciones</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--success);">@Model.Count(m => m.type_movement == "Entrada" || m.type_movement == "Devolucion")</div>
+                </div>
+                <div style="padding: 15px; background: var(--bg-surface); border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Ventas Registradas</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--info);">@Model.Count(m => m.type_movement == "Venta")</div>
+                </div>
+                <div style="padding: 15px; background: var(--bg-surface); border-radius: 8px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Mermas / Ajustes (-)</div>
+                    <div style="font-size: 1.8rem; font-weight: 700; color: var(--danger);">@Model.Count(m => m.type_movement == "Merma" || m.type_movement == "Ajuste")</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+@section Scripts {
+    <script>
+        // FILTRADO DINÁMICO DE LA TABLA
+        function filtrarMovimientos() {
+            const searchVal = document.getElementById("inputBusqueda").value.toUpperCase();
+            const tipoVal = document.getElementById("filtroTipo").value.toUpperCase();
+
+            const tabla = document.getElementById("tablaMovimientos");
+            const filas = tabla.getElementsByClassName("fila-movimiento");
+
+            for (let i = 0; i < filas.length; i++) {
+                const fila = filas[i];
+                const txtTipo = fila.getElementsByClassName("col-tipo")[0].textContent.toUpperCase();
+                const txtProducto = fila.getElementsByClassName("col-producto")[0].textContent.toUpperCase();
+                const txtMotivo = fila.getElementsByClassName("col-motivo")[0].textContent.toUpperCase();
+
+                const cumpleBusqueda = (txtProducto.indexOf(searchVal) > -1 || txtMotivo.indexOf(searchVal) > -1);
+                const cumpleTipo = (tipoVal === "" || txtTipo.indexOf(tipoVal) > -1);
+
+                if (cumpleBusqueda && cumpleTipo) {
+                    fila.style.display = "";
+                } else {
+                    fila.style.display = "none";
+                }
+            }
+        }
+
+        // ELIMINAR (ANULAR) MOVIMIENTO CON AJAX
+        function eliminarMovimiento(id) {
+            if (confirm("\u00bfEsta seguro de anular este movimiento? El stock del producto se revierte automaticamente.")) {
+
+                fetch('@Url.Action("Eliminar", "Movements")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success) {
+                        alert("Movimiento anulado y stock actualizado correctamente.");
+                        location.reload(); // Recarga la página para ver los cambios
+                    } else {
+                        alert("Error al anular: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    alert("Error de conexi\u00f3n al intentar anular.");
+                });
+            }
+        }
+    </script>
+}

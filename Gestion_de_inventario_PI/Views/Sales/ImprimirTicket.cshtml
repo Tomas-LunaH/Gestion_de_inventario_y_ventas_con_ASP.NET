@@ -1,0 +1,184 @@
+@model IEnumerable<Gestion_de_inventario_PI.Models.sales_details>
+@{
+    Layout = null;
+    var venta = ViewBag.Venta as Gestion_de_inventario_PI.Models.Sale;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket #@venta.id_sale</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            margin: 0;
+            padding: 10px;
+            width: 300px; /* Ancho típico de impresora térmica */
+            color: #000;
+        }
+
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+            .ticket-header h2 {
+                margin: 0 0 5px 0;
+                font-size: 16px;
+                text-transform: uppercase;
+            }
+
+            .ticket-header p {
+                margin: 0;
+            }
+
+        .ticket-info {
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 10px;
+        }
+
+            .ticket-info p {
+                margin: 2px 0;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 4px 0;
+        }
+
+        th {
+            border-bottom: 1px dashed #000;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .ticket-totals {
+            border-top: 1px dashed #000;
+            padding-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+            .total-row.grand-total {
+                font-weight: bold;
+                font-size: 16px;
+                margin-top: 5px;
+            }
+
+        .ticket-footer {
+            text-align: center;
+            font-size: 10px;
+            margin-top: 20px;
+            border-top: 1px dashed #000;
+            padding-top: 15px;
+        }
+
+        @@media print {
+            .no-print {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket-header">
+        <h2>Mi Tienda</h2>
+        <p>Avenida Principal 123</p>
+        <p>Tel: (555) 123-4567</p>
+    </div>
+
+    <div class="ticket-info">
+        <p><strong>Ticket:</strong> #@venta.id_sale</p>
+        <p><strong>Fecha:</strong> @venta.date.ToString("dd/MM/yyyy HH:mm")</p>
+        <p><strong>Método de Pago:</strong> @venta.payment</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>CANT</th>
+                <th>PRODUCTO</th>
+                <th class="text-right">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                decimal subtotalAcumulado = 0;
+            }
+            @foreach (var item in Model)
+            {
+                var importe = item.unit_price * item.amount;
+                subtotalAcumulado += importe;
+                <tr>
+                    <td class="text-center">@item.amount</td>
+                    <td>@((item.Product != null ? item.Product.name : "Producto Desconocido").PadRight(15).Substring(0, Math.Min(15, (item.Product != null ? item.Product.name : "Producto Desconocido").Length)))</td>
+                    <td class="text-right">$@importe.ToString("0.00")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="ticket-totals">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>$@subtotalAcumulado.ToString("0.00")</span>
+        </div>
+        <div class="total-row">
+            <span>IVA (16%):</span>
+            <span>$@((subtotalAcumulado * 0.16m).ToString("0.00"))</span>
+        </div>
+        <div class="total-row grand-total">
+            <span>TOTAL:</span>
+            <span>$@venta.Total.ToString("0.00")</span>
+        </div>
+    </div>
+
+    <div class="ticket-footer">
+        <p>¡Gracias por su compra!</p>
+        <p>Vuelva pronto</p>
+    </div>
+
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #000; color: #fff; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">
+            IMPRIMIR TICKET
+        </button>
+    </div>
+
+    <script>
+        // Imprimir automáticamente al cargar la página
+        window.onload = function () {
+            window.print();
+            
+            // Opcional: Cerrar ventana automáticamente después de imprimir
+            window.onafterprint = function() {
+                window.close();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+@model IEnumerable<Gestion_de_inventario_PI.Models.Sale>
+@{
+    ViewBag.Title = "Administración de Ventas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<section class="details" style="grid-template-columns: 1fr; padding-top: 0;">
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+        <div>
+            <h1 style="font-size: 1.8rem; color: var(--text-primary);">Gestiona tus Ventas</h1>
+            <p style="color: var(--text-secondary);">@Model.Count() ventas encontradas</p>
+        </div>
+        <div>
+            <button class="btn btn-outline" style="display: flex; align-items: center; gap: 8px;">
+                <ion-icon name="stats-chart-outline" style="margin-right:0"></ion-icon> Reportes
+            </button>
+        </div>
+    </div>
+
+    <div class="filter-card">
+        <div class="filter-header">
+            <ion-icon name="funnel-outline"></ion-icon> Filtros
+        </div>
+
+        <div class="filter-row filter-row-primary">
+            <div class="filter-group search-group">
+                <ion-icon name="search-outline"></ion-icon>
+                <input type="text" id="inputBusqueda" onkeyup="filtrarTabla()" class="form-input shadow-sm" placeholder="Buscar folio o forma de pago..">
+            </div>
+
+            <div class="filter-group">
+                <select id="filtroMetodoPago" onchange="filtrarTabla()" class="form-input shadow-sm">
+                    <option value="">Cualquier forma de pago</option>
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Stripe">Stripe</option>
+                </select>
+            </div>
+
+            <div class="filter-group active-filter">
+                <select id="filtroEstado" onchange="filtrarTabla()" class="form-input shadow-sm" style="border-color: var(--primary);">
+                    <option value="">Cualquier estado</option>
+                    <option value="Completada" selected>Completada</option>
+                    <option value="Incompleto">Incompleto</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-row filter-row-dates">
+            <div class="filter-group date-group">
+                <label>Desde</label>
+                <input type="date" id="fechaDesde" onchange="filtrarTabla()" class="form-input shadow-sm date-input">
+            </div>
+            <div class="filter-group date-group">
+                <label>Hasta</label>
+                <input type="date" id="fechaHasta" onchange="filtrarTabla()" class="form-input shadow-sm date-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="recentOrders" style="min-height: auto; padding: 0; background: transparent; box-shadow: none; margin-top: 20px;">
+        <div class="table-card">
+            <table style="margin-bottom: 0; width: 100%; border-collapse: collapse; text-align: left;" id="tablaVentas">
+                <thead style="background: var(--bg-surface); border-bottom: 1px solid var(--border);">
+                    <tr>
+                        <th style="padding: 15px 20px;">Folio</th>
+                        <th>Fecha</th>
+                        <th>Forma de Pago</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                                No se encontraron ventas.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var venta in Model)
+                        {
+                            <tr class="fila-venta" style="border-bottom: 1px solid var(--border); color: var(--text-primary);">
+                                <td class="col-folio" style="padding: 15px 20px; font-weight: bold;">#@venta.id_sale</td>
+                                <td class="col-fecha" data-date="@venta.date.ToString("yyyy-MM-dd")">@venta.date.ToString("dd/MMM/yyyy HH:mm")</td>
+                                <td class="col-metodo">
+                                    @if (venta.payment != null && venta.payment.Contains("Stripe"))
+                                    {
+                                        <span style="background: rgba(99, 91, 255, 0.2); color: #635bff; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;"><ion-icon name="card-outline"></ion-icon> Stripe</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;"><ion-icon name="cash-outline"></ion-icon> Efectivo</span>
+                                    }
+                                </td>
+                                <td class="col-total" style="font-weight: bold; color: var(--primary);">$@venta.Total.ToString("0.00")</td>
+                                <td class="col-estado"><span style="color: #28a745;">Completada</span></td>
+
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+
+<div id="modalTicket" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+    <div style="background: var(--bg-surface); width: 90%; max-width: 550px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column;">
+
+        <div style="padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: var(--text-primary); font-size: 1.2rem;">Detalle de Venta <span id="modalFolio" style="color: var(--primary);"></span></h3>
+            <button onclick="cerrarModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
+            <table style="width: 100%; border-collapse: collapse; color: var(--text-primary);">
+                <thead style="border-bottom: 1px solid var(--border); color: var(--text-secondary);">
+                    <tr>
+                        <th style="text-align: left; padding-bottom: 10px;">Producto</th>
+                        <th style="text-align: center; padding-bottom: 10px;">Cant.</th>
+                        <th style="text-align: right; padding-bottom: 10px;">Precio</th>
+                        <th style="text-align: right; padding-bottom: 10px;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaDetallesCuerpo">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // 1. FILTRADO (Buscador, Método, Estado, Fechas)
+        function filtrarTabla() {
+            const searchVal = document.getElementById("inputBusqueda").value.toUpperCase();
+            const metodoVal = document.getElementById("filtroMetodoPago").value;
+            const estadoVal = document.getElementById("filtroEstado").value;
+            const fechaDesdeVal = document.getElementById("fechaDesde").value;
+            const fechaHastaVal = document.getElementById("fechaHasta").value;
+
+            const fechaDesde = fechaDesdeVal ? new Date(fechaDesdeVal) : null;
+            const fechaHasta = fechaHastaVal ? new Date(fechaHastaVal) : null;
+
+            const tabla = document.getElementById("tablaVentas");
+            const filas = tabla.getElementsByClassName("fila-venta");
+
+            for (let i = 0; i < filas.length; i++) {
+                const fila = filas[i];
+
+                const txtFolio = fila.getElementsByClassName("col-folio")[0].textContent.toUpperCase();
+                const txtMetodo = fila.getElementsByClassName("col-metodo")[0].textContent;
+                const txtEstado = fila.getElementsByClassName("col-estado")[0].textContent;
+                const rawFecha = fila.getElementsByClassName("col-fecha")[0].getAttribute("data-date");
+                const fechaVenta = new Date(rawFecha);
+
+                const cumpleBusqueda = (txtFolio.indexOf(searchVal) > -1 || txtMetodo.toUpperCase().indexOf(searchVal) > -1);
+                const cumpleMetodo = (metodoVal === "" || txtMetodo.indexOf(metodoVal) > -1);
+                const cumpleEstado = (estadoVal === "" || txtEstado.indexOf(estadoVal) > -1);
+
+                let cumpleFecha = true;
+                if (fechaDesde && fechaVenta < fechaDesde) cumpleFecha = false;
+                if (fechaHasta && fechaVenta > fechaHasta) cumpleFecha = false;
+
+                if (cumpleBusqueda && cumpleMetodo && cumpleEstado && cumpleFecha) {
+                    fila.style.display = "";
+                } else {
+                    fila.style.display = "none";
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", filtrarTabla);
+
+        // 2. MODAL REPARADO (Usa Razor para la ruta exacta)
+        function abrirModalDetalle(idVenta) {
+            document.getElementById('modalFolio').innerText = "#" + idVenta;
+            document.getElementById('modalTicket').style.display = 'flex';
+
+            const tbody = document.getElementById('tablaDetallesCuerpo');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Cargando detalles...</td></tr>';
+
+            // AQUÍ ESTÁ LA MAGIA QUE ARREGLA EL ERROR 404:
+            const urlCorrecta = '@Url.Action("ObtenerDetalles","Details")' + '?id=' + idVenta;
+
+            fetch(urlCorrecta)
+                .then(res => {
+                    if (!res.ok) throw new Error("Error en la respuesta del servidor");
+                    return res.json();
+                })
+                .then(data => {
+                    tbody.innerHTML = '';
+
+                    if(data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-secondary);">No hay detalles para esta venta.</td></tr>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        tbody.innerHTML += `
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 12px 0;">${item.nombre}</td>
+                                <td style="text-align: center;">${item.cantidad}</td>
+                                <td style="text-align: right;">$${item.precio.toFixed(2)}</td>
+                                <td style="text-align: right; font-weight: bold; color: var(--primary);">$${item.subtotal.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error("Error al cargar detalles:", err);
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ff4d4f; padding: 20px;">Error al cargar datos. Verifica la conexión.</td></tr>';
+                });
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalTicket').style.display = 'none';
+        }
+    </script>
+}

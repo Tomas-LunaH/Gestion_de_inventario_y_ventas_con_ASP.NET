@@ -1,0 +1,255 @@
+@model IEnumerable<Gestion_de_inventario_PI.Models.Product>
+@{
+    ViewBag.Title = "Punto de Venta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@if (ViewBag.Mensaje != null)
+{
+    <script>
+        // Mostramos la alerta en cuanto cargue la página
+        alert('@Html.Raw(ViewBag.Mensaje)');
+
+        @if (ViewBag.SaleId != null)
+        {
+            <text>
+            // Abrir el ticket en otra pestaña si venimos de Stripe Exitoso
+            window.open('@Url.Action("ImprimirTicket", "Sales", new { id = ViewBag.SaleId })', '_blank', 'width=400,height=600');
+            </text>
+        }
+
+        // Limpiamos la URL para que no diga "?pago=exito" si recargan la página
+        window.history.replaceState(null, null, window.location.pathname);
+    </script>
+}
+
+<div class="pos-layout" style="display: flex; gap: 20px; height: 75vh; min-height: 600px; padding-bottom: 20px;">
+
+    <div class="pos-products-section" style="flex: 2; display: flex; flex-direction: column; height: 100%;">
+        <div style="margin-bottom: 15px;">
+            <h1 style="font-size: 1.8rem; margin: 0; color: var(--text-primary);">Punto de Venta</h1>
+            <p style="color: var(--text-secondary); margin: 5px 0 0 0;">Selecciona productos para vender</p>
+        </div>
+
+        <div class="pos-search-bar" style="background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); padding: 10px 15px; display: flex; align-items: center; margin-bottom: 15px;">
+            <ion-icon name="search-outline" style="color: var(--text-secondary); margin-right: 10px; font-size: 1.2rem;"></ion-icon>
+            <input type="text" id="posSearch" placeholder="Buscar producto o SKU..." style="border: none; background: transparent; width: 100%; outline: none; font-size: 1rem; color: var(--text-primary);">
+        </div>
+
+        <div class="pos-results-area" id="posResults" style="flex: 1; overflow-y: auto; padding-right: 10px;">
+        </div>
+    </div>
+
+    <div class="pos-cart-sidebar" style="flex: 1; min-width: 320px; max-width: 380px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; height: 100%;">
+
+        <div class="cart-header" style="padding: 15px 20px; border-bottom: 1px solid var(--border); background: var(--bg-surface); border-radius: 8px 8px 0 0;">
+            <h2 style="font-size: 1.2rem; margin: 0; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                <ion-icon name="cart-outline"></ion-icon> Carrito
+            </h2>
+        </div>
+
+        <div class="cart-body" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 15px 20px;">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); font-weight: bold; margin-bottom: 5px; display: block;">Forma de pago</label>
+                <select id="metodoPago" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-primary); font-size: 1rem; outline: none;">
+                    <option value="Efectivo" selected>Efectivo</option>
+                    <option value="Tarjeta">Tarjeta (Stripe)</option>
+                </select>
+            </div>
+
+            <div id="cartItems" style="flex: 1; overflow-y: auto;">
+            </div>
+        </div>
+
+        <div class="cart-footer" style="padding: 20px; border-top: 1px solid var(--border); background: var(--bg-surface); border-radius: 0 0 8px 8px; margin-top: auto;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.95rem;">
+                <span>Subtotal</span><span id="subtotalAmount">$0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: var(--text-secondary); font-size: 0.95rem;">
+                <span>IVA (16%)</span><span id="taxAmount">$0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 1.3rem; color: var(--text-primary);">
+                <span>Total</span><span id="totalAmount">$0.00</span>
+            </div>
+
+            <button id="btnCobrar" style="width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s;">
+                <ion-icon name="wallet-outline"></ion-icon> Cobrar
+            </button>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script>
+        // 1. INYECTAR DATOS DE C# A JAVASCRIPT
+        const productosDisponibles = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Select(p => new {
+            id = p.id_product,
+            nombre = p.name,
+            sku = p.code,
+            precio = p.saleprice,
+            stock = p.stock
+        })));
+
+        let carrito = [];
+
+        // 2. RENDERIZAR PRODUCTOS (Con Flexbox para fijar el precio)
+        function renderProductos(productos) {
+            const container = document.getElementById('posResults');
+            container.innerHTML = '';
+
+            if (productos.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color: gray; margin-top:50px;">No se encontraron productos</div>';
+                return;
+            }
+
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(140px, 1fr))';
+            container.style.gap = '15px';
+
+            productos.forEach(prod => {
+                const card = document.createElement('div');
+                card.style.cssText = 'background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; min-height: 130px; transition: 0.2s;';
+                card.onmouseover = () => card.style.borderColor = 'var(--primary)';
+                card.onmouseout = () => card.style.borderColor = 'var(--border)';
+
+                card.innerHTML = `
+                    <div>
+                        <div style="font-weight: 500; font-size: 0.95rem; line-height: 1.2; margin-bottom: 5px; color: var(--text-primary);">${prod.nombre}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 10px;">Stock: ${prod.stock}</div>
+                    </div>
+                    <div style="font-weight: bold; color: var(--primary); font-size: 1.2rem; margin-top: auto;">$${prod.precio.toFixed(2)}</div>
+                `;
+                card.onclick = () => agregarAlCarrito(prod);
+                container.appendChild(card);
+            });
+        }
+        renderProductos(productosDisponibles);
+
+        // 3. BUSCADOR EN TIEMPO REAL
+        document.getElementById('posSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            renderProductos(productosDisponibles.filter(p => p.nombre.toLowerCase().includes(term) || p.sku.toLowerCase().includes(term)));
+        });
+
+        // 4. LÓGICA DEL CARRITO
+        function agregarAlCarrito(prod) {
+            const item = carrito.find(i => i.id === prod.id);
+            if (item) {
+                if(item.cantidad < prod.stock) item.cantidad++;
+                else alert("Stock insuficiente");
+            } else {
+                if(prod.stock > 0) carrito.push({ ...prod, cantidad: 1 });
+            }
+            actualizarCarrito();
+        }
+
+        function modificarCantidad(id, delta) {
+            const item = carrito.find(i => i.id === id);
+            const stockOriginal = productosDisponibles.find(p => p.id === id).stock;
+            if (item) {
+                if(delta > 0 && item.cantidad >= stockOriginal) return alert("Stock máximo alcanzado");
+                item.cantidad += delta;
+                if (item.cantidad <= 0) carrito = carrito.filter(i => i.id !== id);
+            }
+            actualizarCarrito();
+        }
+
+        function actualizarCarrito() {
+            const container = document.getElementById('cartItems');
+            const btnCobrar = document.getElementById('btnCobrar');
+            container.innerHTML = '';
+            let subtotal = 0;
+
+            if(carrito.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: gray; margin-top: 50px;">
+                        <ion-icon name="basket-outline" style="font-size: 3rem; opacity: 0.5; margin-bottom: 10px;"></ion-icon>
+                        <p>Carrito vacío</p>
+                    </div>`;
+                btnCobrar.style.opacity = '0.5';
+                btnCobrar.style.pointerEvents = 'none';
+            } else {
+                carrito.forEach(item => {
+                    subtotal += (item.precio * item.cantidad);
+                    container.innerHTML += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border);">
+                            <div style="flex:1;">
+                                <div style="font-size:0.95rem; color: var(--text-primary);">${item.nombre}</div>
+                                <div style="font-size:0.85rem; color: var(--text-secondary);">$${(item.precio * item.cantidad).toFixed(2)}</div>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:center; font-size: 1.2rem;">
+                                <ion-icon name="remove-circle-outline" style="cursor:pointer; color: var(--danger);" onclick="modificarCantidad(${item.id}, -1)"></ion-icon>
+                                <span style="font-size: 1rem; width: 20px; text-align: center; color: var(--text-primary);">${item.cantidad}</span>
+                                <ion-icon name="add-circle-outline" style="cursor:pointer; color: var(--primary);" onclick="modificarCantidad(${item.id}, 1)"></ion-icon>
+                            </div>
+                        </div>
+                    `;
+                });
+                btnCobrar.style.opacity = '1';
+                btnCobrar.style.pointerEvents = 'auto';
+            }
+
+            document.getElementById('subtotalAmount').innerText = `$${subtotal.toFixed(2)}`;
+            document.getElementById('taxAmount').innerText = `$${(subtotal * 0.16).toFixed(2)}`;
+            document.getElementById('totalAmount').innerText = `$${(subtotal * 1.16).toFixed(2)}`;
+        }
+        actualizarCarrito();
+
+        // 5. BOTÓN COBRAR (LA MAGIA DE LAS DOS RUTAS)
+        document.getElementById('btnCobrar').addEventListener('click', () => {
+            if (carrito.length === 0) return;
+
+            const btn = document.getElementById('btnCobrar');
+            const metodo = document.getElementById('metodoPago').value;
+
+            btn.style.opacity = '0.5';
+            btn.style.pointerEvents = 'none';
+            btn.innerHTML = '<ion-icon name="hourglass-outline"></ion-icon> Procesando...';
+
+            if (metodo === 'Efectivo') {
+                // RUTA 1: Guardar en Base de Datos
+                fetch('@Url.Action("CobrarEfectivo", "Sales")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ carrito: carrito })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                    if (data.success) {
+                        // Abrimos el ticket en un popup emergente usando el data.saleId que envía el backend
+                        window.open('@Url.Action("ImprimirTicket", "Sales")/' + data.saleId, '_blank', 'width=400,height=600');
+                        // Recargamos la caja detrás
+                        window.location.reload();
+                    } else {
+                        restaurarBoton();
+                    }
+                })
+                .catch(err => { alert("Error de servidor."); restaurarBoton(); });
+
+            } else if (metodo === 'Tarjeta') {
+                // RUTA 2: Generar Link de Stripe
+                fetch('@Url.Action("GenerarPagoStripe", "Sales")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ carrito: carrito })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.url; // Redirigir a la pantalla de Stripe
+                    } else {
+                        alert(data.message);
+                        restaurarBoton();
+                    }
+                })
+                .catch(err => { alert("Error al conectar con Stripe."); restaurarBoton(); });
+            }
+        });
+
+        function restaurarBoton() {
+            const btn = document.getElementById('btnCobrar');
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            btn.innerHTML = '<ion-icon name="wallet-outline"></ion-icon> Cobrar';
+        }
+    </script>
+}

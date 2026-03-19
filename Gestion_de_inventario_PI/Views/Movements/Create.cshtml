@@ -1,0 +1,65 @@
+@model Gestion_de_inventario_PI.Models.movement
+@{
+    ViewBag.Title = "Registrar Movimiento";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+    <section style="margin-bottom: 30px; display: flex; justify-content: center;">
+        <div class="cardHeader" style="flex-direction: column; align-items: center; text-align: center; gap: 15px; max-width: 800px; width: 100%;">
+            <h2 style="font-size: 1.8rem; margin: 0;">Registrar Nuevo Movimiento</h2>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Llene los datos siguientes para registrar un movimiento en el inventario.</p>
+        </div>
+    </section>
+
+    <section class="details" style="padding-bottom: 0; display: flex; justify-content: center;">
+        <div class="recentOrders" style="max-width: 800px; width: 100%; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+            <div class="cardHeader" style="margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                <h2 style="font-size: 1.3rem; color: var(--text-primary);">Detalles del Movimiento</h2>
+            </div>
+
+            @using (Html.BeginForm("Create", "Movements", FormMethod.Post, new { id = "movementForm" }))
+            {
+                @Html.AntiForgeryToken()
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="type_movement" style="font-weight: 500; font-size: 0.95rem; color: var(--text-secondary);">Tipo de Movimiento *</label>
+                        <select name="type_movement" id="type_movement" required style="padding: 12px; border-radius: 6px; border: 1px solid var(--border); background-color: var(--bg-surface); color: var(--text-primary); font-size: 1rem;">
+                            <option value="">Seleccionar</option>
+                            <option value="Entrada">Entrada de Lote (+)</option>
+                            <option value="Ajuste">Ajuste Inventario (+/-)</option>
+                            <option value="Merma">Merma (-)</option>
+                            <option value="Devolucion">Devolucion Cliente (+)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="ProductId" style="font-weight: 500; font-size: 0.95rem; color: var(--text-secondary);">Producto *</label>
+                        @Html.DropDownList("ProductId", null, "Seleccionar producto", htmlAttributes: new { @class = "form-control", @required = "required", style = "padding: 12px; border-radius: 6px; border: 1px solid var(--border); background-color: var(--bg-surface); color: var(--text-primary); font-size: 1rem; width: 100%; box-sizing: border-box;" })
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="amount" style="font-weight: 500; font-size: 0.95rem; color: var(--text-secondary);">Cantidad *</label>
+                        <input type="number" name="amount" id="amount" min="1" required placeholder="Ej: 10" style="padding: 12px; border-radius: 6px; border: 1px solid var(--border); background-color: var(--bg-surface); color: var(--text-primary); font-size: 1rem; box-sizing: border-box; width: 100%;">
+                    </div>
+
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-weight: 500; font-size: 0.95rem; color: var(--text-secondary);">Usuario Responsable</label>
+                        <input type="text" value="@User.Identity.Name" disabled style="padding: 12px; border-radius: 6px; border: 1px solid var(--border); background-color: rgba(0,0,0,0.05); color: var(--text-secondary); font-size: 1rem; cursor: not-allowed; box-sizing: border-box; width: 100%;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 20px;">
+                    <label for="motive" style="font-weight: 500; font-size: 0.95rem; color: var(--text-secondary);">Motivo/Referencia *</label>
+                    <textarea name="motive" id="motive" required placeholder="Ej: Ajuste por inventario físico mensual..." style="padding: 12px; border-radius: 6px; border: 1px solid var(--border); background-color: var(--bg-surface); color: var(--text-primary); font-size: 1rem; min-height: 100px; resize: vertical; box-sizing: border-box; width: 100%; font-family: inherit;"></textarea>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 15px; margin-top: 35px; justify-content: center; border-top: 1px solid var(--border); padding-top: 25px;">
+                    <button type="submit" class="btn" style="padding: 12px 25px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; background: var(--primary);"><ion-icon name="save-outline"></ion-icon> Guardar Movimiento</button>
+                    <a href="@Url.Action("Index", "Movements")" class="btn btn-secondary" style="padding: 12px 25px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; background-color: transparent; border: 1px solid var(--text-secondary); color: var(--text-secondary); text-decoration: none; border-radius: 6px; transition: 0.3s;"><ion-icon name="close-outline"></ion-icon> Cancelar</a>
+                </div>
+            }
+        </div>
+    </section>

@@ -1,0 +1,126 @@
+﻿@model Gestion_de_inventario_PI.Models.Product
+@{
+    ViewBag.Title = "Editar Producto";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<section class="details" style="grid-template-columns: 1fr; padding-top: 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1 style="font-size: 1.8rem; color: var(--text-primary);">Editar Producto</h1>
+            <p style="color: var(--text-secondary);">Actualiza los datos de @Model.name</p>
+        </div>
+        <a href="@Url.Action("Index")" class="btn-secondary" style="text-decoration: none;">
+            <ion-icon name="arrow-back-outline" style="transform: translateY(2px);"></ion-icon> Cancelar
+        </a>
+    </div>
+
+    @using (Html.BeginForm("Edit", "Products", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+
+        @Html.HiddenFor(model => model.id_product)
+        @Html.HiddenFor(model => model.image)
+
+        <div class="form-card" style="display: block;">
+            <div class="form-header">
+                <h2>Detalles del Producto</h2>
+            </div>
+
+            <div class="form-layout">
+                <div class="image-upload-section">
+                    <input type="file" name="imagenArchivo" id="imagenArchivo" accept="image/*" style="display: none;" onchange="previewImage(this);" />
+
+                    <div class="image-upload-box" id="uploadBox" onclick="document.getElementById('imagenArchivo').click();" style="cursor: pointer; overflow: hidden; position: relative;">
+                        @if (!string.IsNullOrEmpty(Model.image))
+                        {
+                            <img id="imagePreview" src="@Url.Content(Model.image)" alt="Vista previa" style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;" />
+                        }
+                        else
+                        {
+                            <ion-icon name="camera-outline" id="cameraIcon"></ion-icon>
+                            <span id="uploadText">Cambiar imagen</span>
+                            <img id="imagePreview" src="#" alt="Vista previa" style="display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;" />
+                        }
+                    </div>
+                </div>
+
+                <div class="form-fields">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Nombre del Producto</label>
+                            @Html.TextBoxFor(m => m.name, new { @class = "form-input", required = "required" })
+                            @Html.ValidationMessageFor(m => m.name, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>SKU</label>
+                            @Html.TextBoxFor(m => m.code, new { @class = "form-input", required = "required" })
+                            @Html.ValidationMessageFor(m => m.code, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría</label>
+                            @Html.DropDownListFor(m => m.categoryId, (SelectList)ViewBag.categoryId, "Seleccione una...", new { @class = "form-input", @required = "required" })
+                            @Html.ValidationMessageFor(m => m.categoryId, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Precio Venta ($)</label>
+                            @Html.TextBoxFor(m => m.saleprice, new { @class = "form-input", type = "number", step = "0.01", min = "0", required = "required" })
+                            @Html.ValidationMessageFor(m => m.saleprice, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="form-group">
+                            <label>Costo ($)</label>
+                            @Html.TextBoxFor(m => m.buyingprice, new { @class = "form-input", type = "number", step = "0.01", min = "0", required = "required" })
+                            @Html.ValidationMessageFor(m => m.buyingprice, "", new { @class = "text-danger" })
+                        </div>
+                        <div class="form-group">
+                            <label>Stock</label>
+                            @Html.TextBoxFor(m => m.stock, new { @class = "form-input", type = "number", min = "0", required = "required" })
+                            @Html.ValidationMessageFor(m => m.stock, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                            <label style="margin:0;">Estatus</label>
+                            @Html.CheckBoxFor(m => m.status, new { @class = "form-check-input" })
+                            <span style="color: var(--text-secondary);">Activo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="submit" class="btn">
+                    <ion-icon name="sync-outline" style="margin-right:5px; transform: translateY(2px);"></ion-icon> Actualizar Producto
+                </button>
+            </div>
+        </div>
+    }
+</section>
+
+@section Scripts {
+    <script>
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var preview = document.getElementById('imagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+
+                    var icon = document.getElementById('cameraIcon');
+                    var text = document.getElementById('uploadText');
+                    if (icon) icon.style.display = 'none';
+                    if (text) text.style.display = 'none';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}
