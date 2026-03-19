@@ -29,8 +29,8 @@ Sistema de inventario y punto de venta basado en ASP.NET MVC 5 (Framework 4.7.2)
 
 ## Variables de entorno y secretos
 Configúralas antes de ejecutar (o en user-secrets si usas VS):
-- <add key="StripeSecret" value="sk_test_tu_clave_aqui" />
-- <add key="AppPublicUrl" value="https://localhost:44395" /> ```
+- "<add key="StripeSecret" value="sk_test_tu_clave_aqui" />"
+- "<add key="AppPublicUrl" value="https://localhost:44395" />" ```
 - `Manager_Inventary_PI` (opcional) : cadena de conexión override para `Model_db`.
 
 
@@ -42,10 +42,7 @@ Actualmente el DbContext `Model1` persiste productos, ventas, movimientos, categ
 1) Restaurar paquetes NuGet (VS los restaura al abrir la solución).  
 2) Configurar variables `STRIPE_SECRET` y `APP_PUBLIC_URL`.  
 3) Crear DB si no existe (`Update-Database` para ambos contextos o adjuntar `.mdf` en `App_Data` solo para dev).  
-4) Ejecutar en IIS Express (SSL en puerto 44395 según `Web.config`) o `msbuild`:
-```
-msbuild Gestion_de_inventario_PI.slnx /p:Configuration=Debug
-```
+4) Ejecutar en IIS Express (SSL en puerto 44395 según `Web.config`) 
 5) Navegar a `https://localhost:44395/` y autenticarse. Roles se manejan con Identity.
 
 ## Pruebas y comprobaciones mínimas
@@ -65,8 +62,8 @@ msbuild Gestion_de_inventario_PI.slnx /p:Configuration=Debug
 ## Roadmap y Trabajo Futuro (V 2.0)
 Como parte del ciclo de vida del software y gestión de deuda técnica, las siguientes características están contempladas para la siguiente mejora de desarrollo:
 
--Implementación de Webhooks de Stripe: Sustituir la persistencia en memoria del carrito (diccionario estático actual) por una confirmación asíncrona mediante Webhooks, eliminando la dependencia de la URL de retorno del cliente.
--Tokens CSRF en peticiones AJAX: Agregar el atributo [ValidateAntiForgeryToken] en los endpoints de cobro e inyectar el token en los headers de las peticiones de jQuery para prevenir falsificación de solicitudes entre sitios.
+- Implementación de Webhooks de Stripe: Sustituir la persistencia en memoria del carrito (diccionario estático actual) por una confirmación asíncrona mediante Webhooks, eliminando la dependencia de la URL de retorno del cliente.
+- Tokens CSRF en peticiones AJAX: Agregar el atributo [ValidateAntiForgeryToken] en los endpoints de cobro e inyectar el token en los headers de las peticiones de jQuery para prevenir falsificación de solicitudes entre sitios.
 
 
 
