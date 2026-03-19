@@ -29,8 +29,8 @@ Sistema de inventario y punto de venta basado en ASP.NET MVC 5 (Framework 4.7.2)
 
 ## Variables de entorno y secretos
 Configúralas antes de ejecutar (o en user-secrets si usas VS):
-- "<add key="StripeSecret" value="sk_test_tu_clave_aqui" />"
-- "<add key="AppPublicUrl" value="https://localhost:44395" />" ```
+- `private.config` add key="StripeSecret" value="sk_test_tu_clave_aqui" "
+- `APP_PUBLIC_URL` add key="AppPublicUrl" value="https://localhost:44395"" ```
 - `Manager_Inventary_PI` (opcional) : cadena de conexión override para `Model_db`.
 
 
@@ -54,7 +54,7 @@ Actualmente el DbContext `Model1` persiste productos, ventas, movimientos, categ
 
 ## Despliegue
 - Preferido: Azure App Service / IIS detrás de HTTPS.  
-- Establecer variables de aplicación (`STRIPE_SECRET`, `APP_PUBLIC_URL`, `InventoryDb` si se usa override).  
+- Establecer variables de aplicación (`private.config`, `APP_PUBLIC_URL`, `InventoryDb` si se usa override).  
 - Migraciones: correr `Update-Database` antes del swap.  
 - Publicar con `msbuild /p:DeployOnBuild=true` o pipeline CI/CD.  
 - Habilitar logging (Application Insights o Serilog) y health-check (`/` o `/Dashboard`).  
